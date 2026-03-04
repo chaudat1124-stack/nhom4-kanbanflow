@@ -1,38 +1,50 @@
-
 import '../entities/task.dart';
 import '../repositories/task_repository.dart';
 
-class GetTasksUseCase {
+// Usecase: Lấy danh sách công việc
+class GetTasks {
   final TaskRepository repository;
-  GetTasksUseCase(this.repository);
-  
-  Future<List<Task>> call() async => await repository.getAllTasks();
+  GetTasks(this.repository);
+
+  Future<List<Task>> call({
+    String? boardId,
+    String? query,
+    String? status,
+  }) async {
+    return await repository.getTasks(
+      boardId: boardId,
+      query: query,
+      status: status,
+    );
+  }
 }
 
-class AddTaskUseCase {
+// Usecase: Thêm công việc mới
+class AddTask {
   final TaskRepository repository;
-  AddTaskUseCase(this.repository);
-  
-  Future<Task> call(Task task) async => await repository.insertTask(task);
+  AddTask(this.repository);
+
+  Future<void> call(Task task) async {
+    return await repository.addTask(task);
+  }
 }
 
-class UpdateTaskUseCase {
+// Usecase: Cập nhật công việc
+class UpdateTask {
   final TaskRepository repository;
-  UpdateTaskUseCase(this.repository);
-  
-  Future<int> call(Task task) async => await repository.updateTask(task);
+  UpdateTask(this.repository);
+
+  Future<void> call(Task task) async {
+    return await repository.updateTask(task);
+  }
 }
 
-class DeleteTaskUseCase {
+// Usecase: Xóa công việc
+class DeleteTask {
   final TaskRepository repository;
-  DeleteTaskUseCase(this.repository);
-  
-  Future<int> call(int id) async => await repository.deleteTask(id);
-}
+  DeleteTask(this.repository);
 
-class SearchTasksUseCase {
-  final TaskRepository repository;
-  SearchTasksUseCase(this.repository);
-  
-  Future<List<Task>> call(String keyword) async => await repository.searchTasks(keyword);
+  Future<void> call(String id) async {
+    return await repository.deleteTask(id);
+  }
 }
