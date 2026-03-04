@@ -1,85 +1,81 @@
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:equatable/equatable.dart';
-import '../../domain/entities/task.dart';
 import '../../domain/usecases/task_usecases.dart';
-
-part 'task_event.dart';
-part 'task_state.dart';
+import 'task_event.dart';
+import 'task_state.dart';
 
 class TaskBloc extends Bloc<TaskEvent, TaskState> {
-  final GetTasksUseCase getTasks;
-  final AddTaskUseCase addTask;
-  final UpdateTaskUseCase updateTask;
-  final DeleteTaskUseCase deleteTask;
-  final SearchTasksUseCase searchTasks;
+  final GetTasks getTasks;
+  final AddTask addTask;
+  final UpdateTask updateTask;
+  final DeleteTask deleteTask;
+
+  String? currentBoardId;
+  String? currentQuery;
+  String? currentStatus;
 
   TaskBloc({
     required this.getTasks,
     required this.addTask,
     required this.updateTask,
     required this.deleteTask,
-    required this.searchTasks,
   }) : super(TaskInitial()) {
+    // Đăng ký các hàm xử lý cho từng sự kiện
     on<LoadTasks>(_onLoadTasks);
-    on<AddNewTask>(_onAddTask);
-    on<UpdateExistingTask>(_onUpdateTask);
-    on<DeleteExistingTask>(_onDeleteTask);
-    on<SearchTasksEvent>(_onSearchTasks);
+    on<AddTaskEvent>(_onAddTask);
+    on<UpdateTaskEvent>(_onUpdateTask);
+    on<DeleteTaskEvent>(_onDeleteTask);
   }
 
   Future<void> _onLoadTasks(LoadTasks event, Emitter<TaskState> emit) async {
-    emit(TaskLoading());
+    currentBoardId = event.boardId ?? currentBoardId;
+    currentQuery = event.query ?? currentQuery;
+    currentStatus = event.status ?? currentStatus;
+
+    emit(TaskLoading()); // Báo cho UI biết là đang tải
     try {
-      final tasks = await getTasks();
-      emit(TaskLoaded(tasks));
+      final tasks = await getTasks.call(
+        boardId: currentBoardId,
+        query: currentQuery,
+        status: currentStatus,
+      ); // Gọi xuống Usecase
+      emit(TaskLoaded(tasks)); // Tải xong thì quăng dữ liệu ra
     } catch (e) {
-      emit(const TaskError('Failed to load tasks'));
+      emit(TaskError(e.toString())); // Bị lỗi thì quăng lỗi ra
     }
   }
 
-  Future<void> _onAddTask(AddNewTask event, Emitter<TaskState> emit) async {
+  Future<void> _onAddTask(AddTaskEvent event, Emitter<TaskState> emit) async {
     try {
-      await addTask(event.task);
-      add(LoadTasks());
+      await addTask.call(event.task);
+      add(
+        LoadTasks(),
+      ); // Thêm xong thì tự động gọi sự kiện LoadTasks để làm mới bảng
     } catch (e) {
-      emit(const TaskError('Failed to add task'));
+      emit(TaskError(e.toString()));
     }
   }
 
   Future<void> _onUpdateTask(
-    UpdateExistingTask event,
+    UpdateTaskEvent event,
     Emitter<TaskState> emit,
   ) async {
     try {
-      await updateTask(event.task);
+      await updateTask.call(event.task);
       add(LoadTasks());
     } catch (e) {
-      emit(const TaskError('Failed to update task'));
+      emit(TaskError(e.toString()));
     }
   }
 
   Future<void> _onDeleteTask(
-    DeleteExistingTask event,
+    DeleteTaskEvent event,
     Emitter<TaskState> emit,
   ) async {
     try {
-      await deleteTask(event.id);
+      await deleteTask.call(event.id);
       add(LoadTasks());
     } catch (e) {
-      emit(const TaskError('Failed to delete task'));
-    }
-  }
-
-  Future<void> _onSearchTasks(
-    SearchTasksEvent event,
-    Emitter<TaskState> emit,
-  ) async {
-    emit(TaskLoading());
-    try {
-      final tasks = await searchTasks(event.keyword);
-      emit(TaskLoaded(tasks));
-    } catch (e) {
-      emit(const TaskError('Failed to search tasks'));
+      emit(TaskError(e.toString()));
     }
   }
 }

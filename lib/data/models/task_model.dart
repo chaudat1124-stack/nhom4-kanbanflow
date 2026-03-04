@@ -1,35 +1,39 @@
-// File: lib/data/models/task_model.dart
+import '../../domain/entities/task.dart';
 
-class TaskModel {
-  final int? id;
-  final String title;
-  final String description;
-  final String status; // Trạng thái của cột: 'todo', 'doing', 'done'
+class TaskModel extends Task {
+  const TaskModel({
+    required String id,
+    required String boardId,
+    required String title,
+    required String description,
+    required String status,
+  }) : super(
+         id: id,
+         boardId: boardId,
+         title: title,
+         description: description,
+         status: status,
+       );
 
-  TaskModel({
-    this.id,
-    required this.title,
-    required this.description,
-    required this.status,
-  });
-
-  // Chuyển đối tượng Task thành Map để lưu vào SQLite
-  Map<String, dynamic> toMap() {
-    return {
-      'id': id,
-      'title': title,
-      'description': description,
-      'status': status,
-    };
-  }
-
-  // Đọc dữ liệu từ SQLite (Map) và chuyển ngược lại thành đối tượng Task
+  // Chuyển từ SQLite (Map) sang Model
   factory TaskModel.fromMap(Map<String, dynamic> map) {
     return TaskModel(
-      id: map['id'] as int?,
+      id: map['id'] as String,
+      boardId: map['boardId'] as String,
       title: map['title'] as String,
       description: map['description'] as String,
       status: map['status'] as String,
     );
+  }
+
+  // Chuyển từ Model sang SQLite (Map) để lưu trữ
+  Map<String, dynamic> toMap() {
+    return {
+      'id': id,
+      'boardId': boardId,
+      'title': title,
+      'description': description,
+      'status': status,
+    };
   }
 }

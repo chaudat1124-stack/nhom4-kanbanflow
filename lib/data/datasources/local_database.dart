@@ -1,74 +1,120 @@
-// File: lib/data/datasources/local_database.dart
-
+import 'package:flutter/foundation.dart';
 import 'package:sqflite/sqflite.dart';
+import 'package:sqflite_common_ffi/sqflite_ffi.dart';
+import 'package:sqflite_common_ffi_web/sqflite_ffi_web.dart';
 import 'package:path/path.dart';
 import '../models/task_model.dart';
+import '../models/board_model.dart';
 
 class LocalDatabase {
-  // Áp dụng Singleton pattern để chỉ có 1 instance database duy nhất
-  static final LocalDatabase instance = LocalDatabase._init();
   static Database? _database;
 
-  LocalDatabase._init();
-
-  // Gọi hàm này để lấy đối tượng database
   Future<Database> get database async {
     if (_database != null) return _database!;
     _database = await _initDB('kanbanflow.db');
     return _database!;
   }
 
-  // Khởi tạo Database và định nghĩa đường dẫn lưu file
+  Future<void> close() async {
+    if (_database != null) {
+      await _database!.close();
+      _database = null;
+    }
+  }
+
   Future<Database> _initDB(String filePath) async {
+    if (kIsWeb) {
+      // Khởi tạo FFI Web
+      databaseFactory = databaseFactoryFfiWeb;
+      return await databaseFactory.openDatabase(
+        filePath,
+        options: OpenDatabaseOptions(version: 1, onCreate: _createDB),
+      );
+    }
+
+    // Kích hoạt FFI nếu đang chạy trên Windows/Linux/Mac (cực kỳ quan trọng để chạy Test)
+    if (defaultTargetPlatform == TargetPlatform.windows ||
+        defaultTargetPlatform == TargetPlatform.linux ||
+        defaultTargetPlatform == TargetPlatform.macOS) {
+      sqfliteFfiInit();
+      databaseFactory = databaseFactoryFfi;
+    }
+
     final dbPath = await getDatabasesPath();
     final path = join(dbPath, filePath);
 
-    // Mở DB, nếu chưa có sẽ gọi hàm _createDB
     return await openDatabase(path, version: 1, onCreate: _createDB);
   }
 
-  // Hàm tạo các bảng dữ liệu
   Future _createDB(Database db, int version) async {
-    // Tạo bảng Tasks
     await db.execute('''
-      CREATE TABLE tasks (
-        id INTEGER PRIMARY KEY AUTOINCREMENT,
+      CREATE TABLE boards (
+        id TEXT PRIMARY KEY,
         title TEXT NOT NULL,
-        description TEXT NOT NULL,
-        status TEXT NOT NULL
+        createdAt TEXT NOT NULL
       )
     ''');
-    
-    
+    await db.execute('''
+      CREATE TABLE tasks (
+        id TEXT PRIMARY KEY,
+        boardId TEXT NOT NULL,
+        title TEXT NOT NULL,
+        description TEXT NOT NULL,
+        status TEXT NOT NULL,
+        FOREIGN KEY (boardId) REFERENCES boards (id) ON DELETE CASCADE
+      )
+    ''');
   }
 
-  // 1. Thêm một Task mới vào Database
-  Future<TaskModel> insertTask(TaskModel task) async {
-    final db = await instance.database;
-    final id = await db.insert('tasks', task.toMap());
-    
-    // Trả về TaskModel mới có kèm theo ID vừa được SQLite cấp tự động
-    return TaskModel(
-      id: id,
-      title: task.title,
-      description: task.description,
-      status: task.status,
+  Future<List<TaskModel>> getTasks({
+    String? boardId,
+    String? query,
+    String? status,
+  }) async {
+    final db = await database;
+
+    List<String> whereClauses = [];
+    List<dynamic> whereArgs = [];
+
+    if (boardId != null) {
+      whereClauses.add('boardId = ?');
+      whereArgs.add(boardId);
+    }
+
+    if (status != null) {
+      whereClauses.add('status = ?');
+      whereArgs.add(status);
+    }
+
+    if (query != null && query.isNotEmpty) {
+      whereClauses.add('title LIKE ?');
+      whereArgs.add('%\$query%');
+    }
+
+    String? whereString = whereClauses.isNotEmpty
+        ? whereClauses.join(' AND ')
+        : null;
+
+    final result = await db.query(
+      'tasks',
+      where: whereString,
+      whereArgs: whereArgs.isNotEmpty ? whereArgs : null,
+    );
+    return result.map((map) => TaskModel.fromMap(map)).toList();
+  }
+
+  Future<int> insertTask(TaskModel task) async {
+    final db = await database;
+    return await db.insert(
+      'tasks',
+      task.toMap(),
+      conflictAlgorithm: ConflictAlgorithm.replace,
     );
   }
 
-  // 2. Lấy toàn bộ danh sách Task (để hiển thị lên Board)
-  Future<List<TaskModel>> getAllTasks() async {
-    final db = await instance.database;
-    final maps = await db.query('tasks'); // Truy vấn toàn bộ bảng 'tasks'
-
-    // Chuyển đổi List<Map> thành List<TaskModel>
-    return maps.map((map) => TaskModel.fromMap(map)).toList();
-  }
-
-  // 3. Cập nhật Task (Rất quan trọng cho bạn B khi làm Drag & Drop đổi Cột)
   Future<int> updateTask(TaskModel task) async {
-    final db = await instance.database;
-    return db.update(
+    final db = await database;
+    return await db.update(
       'tasks',
       task.toMap(),
       where: 'id = ?',
@@ -76,25 +122,39 @@ class LocalDatabase {
     );
   }
 
-  // 4. Xóa một Task
-  Future<int> deleteTask(int id) async {
-    final db = await instance.database;
-    return await db.delete(
-      'tasks',
-      where: 'id = ?',
-      whereArgs: [id],
+  Future<int> deleteTask(String id) async {
+    final db = await database;
+    return await db.delete('tasks', where: 'id = ?', whereArgs: [id]);
+  }
+
+  // BOARDS CRUD
+  Future<List<BoardModel>> getBoards() async {
+    final db = await database;
+    final result = await db.query('boards', orderBy: 'createdAt ASC');
+    return result.map((map) => BoardModel.fromMap(map)).toList();
+  }
+
+  Future<int> insertBoard(BoardModel board) async {
+    final db = await database;
+    return await db.insert(
+      'boards',
+      board.toMap(),
+      conflictAlgorithm: ConflictAlgorithm.replace,
     );
   }
 
-  // 5. Tìm kiếm Task theo tiêu đề hoặc mô tả (Search / Filter)
-  Future<List<TaskModel>> searchTasks(String keyword) async {
-    final db = await instance.database;
-    final maps = await db.query(
-      'tasks',
-      where: 'title LIKE ? OR description LIKE ?',
-      whereArgs: ['%$keyword%', '%$keyword%'],
+  Future<int> updateBoard(BoardModel board) async {
+    final db = await database;
+    return await db.update(
+      'boards',
+      board.toMap(),
+      where: 'id = ?',
+      whereArgs: [board.id],
     );
-    
-    return maps.map((map) => TaskModel.fromMap(map)).toList();
+  }
+
+  Future<int> deleteBoard(String id) async {
+    final db = await database;
+    return await db.delete('boards', where: 'id = ?', whereArgs: [id]);
   }
 }

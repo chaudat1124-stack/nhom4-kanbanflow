@@ -1,19 +1,15 @@
-
-import 'package:equatable/equatable.dart';
-
-class Task extends Equatable {
-  final int? id;
+class Task {
+  final String id;
+  final String boardId;
   final String title;
   final String description;
-  final String status;
+  final String status; // Trạng thái: 'todo', 'doing', 'done'
 
   const Task({
-    this.id,
+    required this.id,
+    required this.boardId,
     required this.title,
     required this.description,
     required this.status,
   });
-
-  @override
-  List<Object?> get props => [id, title, description, status];
 }

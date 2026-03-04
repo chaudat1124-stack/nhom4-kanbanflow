@@ -1,30 +1,21 @@
-part of 'task_bloc.dart';
+import '../../domain/entities/task.dart';
 
-abstract class TaskState extends Equatable {
-  const TaskState();
+abstract class TaskState {}
 
-  @override
-  List<Object> get props => [];
-}
-
+// Trạng thái ban đầu (chưa làm gì cả)
 class TaskInitial extends TaskState {}
 
+// Trạng thái đang tải dữ liệu (để UI hiện vòng xoay)
 class TaskLoading extends TaskState {}
 
+// Trạng thái đã tải xong (chứa danh sách Task để UI vẽ 3 cột)
 class TaskLoaded extends TaskState {
   final List<Task> tasks;
-
-  const TaskLoaded(this.tasks);
-
-  @override
-  List<Object> get props => [tasks];
+  TaskLoaded(this.tasks);
 }
 
+// Trạng thái lỗi (để UI hiện dòng chữ đỏ báo lỗi)
 class TaskError extends TaskState {
   final String message;
-
-  const TaskError(this.message);
-
-  @override
-  List<Object> get props => [message];
+  TaskError(this.message);
 }
