@@ -182,10 +182,17 @@ class _MyAppState extends State<MyApp> with WidgetsBindingObserver {
         listener: (context, state) {
           if (state is Authenticated) {
             SupabaseNotificationListener.start(state.user.id);
+            // Nạp lại dữ liệu cho tài khoản mới
+            context.read<BoardBloc>().add(WatchBoards());
+            context.read<TaskBloc>().add(LoadTasks());
+
             // Dọn dẹp stack để không bị kẹt ở màn hình Login/Register
             _navigatorKey.currentState?.popUntil((route) => route.isFirst);
           } else if (state is Unauthenticated) {
             SupabaseNotificationListener.stop();
+            // Xóa sạch dữ liệu của tài khoản cũ
+            context.read<BoardBloc>().add(ResetBoards());
+            context.read<TaskBloc>().add(ResetTasks());
           }
         },
         child: ValueListenableBuilder<AppPreferencesState>(

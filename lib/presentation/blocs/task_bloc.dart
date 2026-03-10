@@ -24,6 +24,12 @@ class TaskBloc extends Bloc<TaskEvent, TaskState> {
     on<AddTaskEvent>(_onAddTask);
     on<UpdateTaskEvent>(_onUpdateTask);
     on<DeleteTaskEvent>(_onDeleteTask);
+    on<ResetTasks>((event, emit) {
+      currentBoardId = null;
+      currentQuery = null;
+      currentStatus = null;
+      emit(TaskInitial());
+    });
   }
 
   Future<void> _onLoadTasks(LoadTasks event, Emitter<TaskState> emit) async {

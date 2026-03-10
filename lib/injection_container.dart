@@ -47,6 +47,7 @@ Future<void> init() async {
       addBoard: sl(),
       updateBoard: sl(),
       deleteBoard: sl(),
+      watchBoards: sl(),
     ),
   );
 
@@ -60,6 +61,7 @@ Future<void> init() async {
   sl.registerLazySingleton(() => AddBoard(sl()));
   sl.registerLazySingleton(() => UpdateBoard(sl()));
   sl.registerLazySingleton(() => DeleteBoard(sl()));
+  sl.registerLazySingleton(() => WatchBoardsUseCase(sl()));
 
   // 3. Khởi tạo Repository
   sl.registerLazySingleton<AuthRepository>(
