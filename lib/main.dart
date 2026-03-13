@@ -102,12 +102,11 @@ class _MyAppState extends State<MyApp> with WidgetsBindingObserver {
     _startPresenceHeartbeat();
   }
 
-  // Sử dụng dynamic để tránh xung đột kiểu dữ liệu AuthState của Bloc và Supabase
+  // SỬA LỖI TẠI ĐÂY: Dùng dynamic và try-catch thay vì check kiểu AuthState
   void _handleAuthStateChange(dynamic data) async {
     unawaited(_syncAppPreferences());
     
-    // Kiểm tra logic quên mật khẩu
-    if (data is supabase.AuthState) {
+    try {
       if (data.event == supabase.AuthChangeEvent.passwordRecovery && !_openingRecoveryScreen) {
         _openingRecoveryScreen = true;
         WidgetsBinding.instance.addPostFrameCallback((_) async {
@@ -115,6 +114,8 @@ class _MyAppState extends State<MyApp> with WidgetsBindingObserver {
           _openingRecoveryScreen = false;
         });
       }
+    } catch (_) {
+      // Bỏ qua lỗi âm thầm nếu object trả về không có .event
     }
   }
 
