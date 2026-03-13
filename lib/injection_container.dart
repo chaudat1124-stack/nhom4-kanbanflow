@@ -1,30 +1,36 @@
 import 'package:get_it/get_it.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
+
+// Import Data Sources
 import 'data/datasources/local_database.dart';
+
+// Import Repositories
+import 'data/repositories/auth_repository_impl.dart';
+import 'data/repositories/board_repository_impl.dart';
 import 'data/repositories/task_repository_impl.dart';
 import 'data/repositories/notification_repository.dart';
-import 'domain/repositories/task_repository.dart';
-import 'domain/usecases/task_usecases.dart';
-import 'presentation/blocs/task_bloc.dart';
-
-import 'data/repositories/board_repository_impl.dart';
-import 'domain/repositories/board_repository.dart';
-import 'domain/usecases/board_usecases.dart';
-import 'presentation/blocs/board_bloc.dart';
-import 'package:supabase_flutter/supabase_flutter.dart';
 import 'data/repositories/task_interaction_repository.dart';
 import 'data/repositories/friend_repository.dart';
 import 'data/repositories/chat_repository.dart';
 import 'domain/repositories/task_aggregator_repository.dart';
 import 'data/repositories/task_aggregator_repository_impl.dart';
 
-import 'data/repositories/auth_repository_impl.dart';
+// Import Domain Repositories
 import 'domain/repositories/auth_repository.dart';
+import 'domain/repositories/board_repository.dart';
+import 'domain/repositories/task_repository.dart';
+
+// Import Use Cases
+import 'domain/usecases/task_usecases.dart';
+import 'domain/usecases/board_usecases.dart';
+
+// Import Blocs & Services
 import 'presentation/blocs/auth/auth_bloc.dart';
+import 'presentation/blocs/task_bloc.dart';
+import 'presentation/blocs/board_bloc.dart';
 import 'core/services/ai_service.dart';
 
-// (Nhớ check lại đường dẫn import file task_bloc của bạn cho chuẩn nhé)
-
-final sl = GetIt.instance; // sl viết tắt của Service Locator
+final sl = GetIt.instance; // Service Locator
 
 Future<void> init() async {
   // 0. Khởi tạo core (Supabase)
