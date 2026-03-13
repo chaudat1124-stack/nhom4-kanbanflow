@@ -1,7 +1,6 @@
-# Khai báo phiên bản iOS tối thiểu. 13.0 là chuẩn cho các thư viện Supabase/AI.
-platform :ios, '13.0'
+# Đã nâng lên 14.0 để tương thích tốt nhất với các thư viện hiện tại (như app_links)
+platform :ios, '14.0'
 
-# Tắt thống kê để tăng tốc độ cài đặt Pods
 ENV['COCOAPODS_DISABLE_STATS'] = 'true'
 
 project 'Runner', {
@@ -43,17 +42,16 @@ post_install do |installer|
     flutter_additional_ios_build_settings(target)
     
     target.build_configurations.each do |config|
-      # 1. Đảm bảo tất cả các thư viện con (Pods) đều chạy cùng phiên bản iOS 13.0
-      config.build_settings['IPHONEOS_DEPLOYMENT_TARGET'] = '13.0'
+      # 1. Đồng bộ phiên bản iOS 14.0 cho tất cả các thư viện
+      config.build_settings['IPHONEOS_DEPLOYMENT_TARGET'] = '14.0'
       
-      # 2. Tắt Bitcode vì Flutter không còn yêu cầu và nó gây lỗi khi build simulator
+      # 2. Tắt Bitcode (Flutter không còn dùng, gây lỗi nếu bật)
       config.build_settings['ENABLE_BITCODE'] = 'NO'
       
-      # 3. Sửa lỗi "Swift Version" cho các thư viện cũ (DKPhotoGallery, v.v.)
+      # 3. Cố định Swift version để không bị lỗi với các thư viện cũ
       config.build_settings['SWIFT_VERSION'] = '5.0'
-
-      # 4. Loại bỏ kiến trúc arm64 cho simulator để tránh lỗi khi build trên Mac M1/M2 của Codemagic
-      config.build_settings['EXCLUDED_ARCHS[sdk=iphonesimulator*]'] = 'arm64'
+      
+      # (Đã xóa dòng EXCLUDED_ARCHS để máy Mac M2 của Codemagic có thể build kiến trúc arm64, sửa triệt để lỗi mất module app_links)
     end
   end
 end
