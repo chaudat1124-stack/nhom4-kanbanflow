@@ -31,7 +31,7 @@ class TaskRepositoryImpl implements TaskRepository {
 
       var request = supabaseClient
           .from('tasks')
-          .select('*, task_assignees(user_id)');
+          .select('id, board_id, title, description, status, creator_id, due_at, created_at, updated_at, checklist, has_attachments, task_type, task_assignees(user_id)');
 
       if (boardId != null) {
         request = request.eq('board_id', boardId);
@@ -274,7 +274,7 @@ class TaskRepositoryImpl implements TaskRepository {
     try {
       final response = await supabaseClient
           .from('tasks')
-          .select('*, task_assignees(user_id)')
+          .select('id, board_id, title, description, status, creator_id, due_at, created_at, updated_at, checklist, has_attachments, task_type, task_assignees(user_id)')
           .eq('id', id)
           .maybeSingle();
       
@@ -290,7 +290,6 @@ class TaskRepositoryImpl implements TaskRepository {
   Future<void> syncPendingTasks() async {
     final pending = await localDatabase.getPendingOperations('task');
     if (pending.isEmpty) {
-      debugPrint('DEBUG: syncPendingTasks - No pending operations to sync.');
       return;
     }
     

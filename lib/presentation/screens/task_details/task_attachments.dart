@@ -12,6 +12,7 @@ class TaskAttachments extends StatelessWidget {
   final VoidCallback onPickAndUpload;
   final Function(TaskAttachment) onOpen;
   final Function(TaskAttachment) onDelete;
+  final Function(TaskAttachment) onDownload;
 
   const TaskAttachments({
     super.key,
@@ -22,6 +23,7 @@ class TaskAttachments extends StatelessWidget {
     required this.onPickAndUpload,
     required this.onOpen,
     required this.onDelete,
+    required this.onDownload,
   });
 
   @override
@@ -67,7 +69,6 @@ class TaskAttachments extends StatelessWidget {
           const Center(
             child: Padding(
               padding: EdgeInsets.all(16),
-              child: CircularProgressIndicator(),
             ),
           )
         else if (attachments.isEmpty)
@@ -83,7 +84,7 @@ class TaskAttachments extends StatelessWidget {
                 border: Border.all(
                   color: const Color(0xFFE2E8F0),
                   width: 1.5,
-                  style: BorderStyle.solid, // Note: Flutter doesn't native support dashed border with standard Border. use color/style to approximate or standard clean look
+                  style: BorderStyle.solid,
                 ),
                 boxShadow: [
                   BoxShadow(
@@ -98,14 +99,14 @@ class TaskAttachments extends StatelessWidget {
                 children: [
                   Container(
                     padding: const EdgeInsets.all(12),
-                    decoration: BoxDecoration(
-                      color: const Color(0xFFF1F5F9),
+                    decoration: const BoxDecoration(
+                      color: Color(0xFFF1F5F9),
                       shape: BoxShape.circle,
                     ),
-                    child: Icon(
+                    child: const Icon(
                       Icons.cloud_upload_outlined,
                       size: 32,
-                      color: const Color(0xFF64748B),
+                      color: Color(0xFF64748B),
                     ),
                   ),
                   const SizedBox(height: 16),
@@ -229,14 +230,23 @@ class TaskAttachments extends StatelessWidget {
                                 constraints: const BoxConstraints(),
                                 padding: EdgeInsets.zero,
                                 icon: const Icon(
-                                  Icons.delete_outline,
+                                  Icons.download_rounded,
                                   color: Colors.white,
                                   size: 16,
                                 ),
-                                onPressed: role == 'viewer'
-                                    ? null
-                                    : () => onDelete(item),
+                                onPressed: () => onDownload(item),
                               ),
+                              if (role != 'viewer')
+                                IconButton(
+                                  constraints: const BoxConstraints(),
+                                  padding: EdgeInsets.zero,
+                                  icon: const Icon(
+                                    Icons.delete_outline,
+                                    color: Colors.white,
+                                    size: 16,
+                                  ),
+                                  onPressed: () => onDelete(item),
+                                ),
                             ],
                           ),
                         ),
@@ -256,12 +266,14 @@ class PriorityPreview extends StatelessWidget {
   final List<TaskAttachment> attachments;
   final bool loading;
   final Function(TaskAttachment) onOpen;
+  final Function(TaskAttachment) onDownload;
 
   const PriorityPreview({
     super.key,
     required this.attachments,
     required this.loading,
     required this.onOpen,
+    required this.onDownload,
   });
 
   @override
@@ -309,13 +321,29 @@ class PriorityPreview extends StatelessWidget {
             Positioned(
               bottom: 16,
               right: 16,
-              child: FloatingActionButton.small(
-                onPressed: () => onOpen(image),
-                backgroundColor: Colors.white,
-                child: const Icon(
-                  Icons.fullscreen_rounded,
-                  color: Colors.blueAccent,
-                ),
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  FloatingActionButton.small(
+                    onPressed: () => onDownload(image),
+                    backgroundColor: Colors.white,
+                    heroTag: 'download_priority',
+                    child: const Icon(
+                      Icons.download_rounded,
+                      color: Colors.blueAccent,
+                    ),
+                  ),
+                  const SizedBox(width: 8),
+                  FloatingActionButton.small(
+                    onPressed: () => onOpen(image),
+                    backgroundColor: Colors.white,
+                    heroTag: 'fullscreen_priority',
+                    child: const Icon(
+                      Icons.fullscreen_rounded,
+                      color: Colors.blueAccent,
+                    ),
+                  ),
+                ],
               ),
             ),
           ],

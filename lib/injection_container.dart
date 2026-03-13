@@ -82,13 +82,13 @@ Future<void> init() async {
     () => BoardRepositoryImpl(supabaseClient: sl(), localDatabase: sl()),
   );
   sl.registerLazySingleton<TaskInteractionRepository>(
-    () => TaskInteractionRepository(client: sl(), notificationRepository: sl()),
+    () => TaskInteractionRepository(client: sl()),
   );
   sl.registerLazySingleton<FriendRepository>(
     () => FriendRepository(client: sl(), notificationRepository: sl()),
   );
   sl.registerLazySingleton<ChatRepository>(
-    () => ChatRepository(client: sl(), notificationRepository: sl()),
+    () => ChatRepository(client: sl()),
   );
   sl.registerLazySingleton<TaskAggregatorRepository>(
     () => TaskAggregatorRepositoryImpl(supabaseClient: sl()),
